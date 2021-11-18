@@ -1,17 +1,21 @@
+import os
+
+from dotenv import load_dotenv
 
 
 class CurrencyConverterCrawler:
     _URL = "http://api.exchangeratesapi.io/v1/latest"
-    _API_KEY = "36517c0199f77a3eb3f068ef0fe58e8c"  # TODO change
+    # _API_KEY = "36517c0199f77a3eb3f068ef0fe58e8c"  # TODO change
 
     def __init__(self):
         self.rates = None
         self.base = None
+        load_dotenv()
+        self._API_KEY = os.getenv("API_KEY")
 
     def crawl(self, renew=False):
-        import os, json
-        from datetime import datetime
-        today = datetime.today().strftime('%Y-%m-%d')
+        import os, json, datetime
+        today = datetime.datetime.today().strftime('%Y-%m-%d')
         if (not os.path.isfile(f"./exchangerates_{today}")) or renew:
             import requests
             ans = requests.get(self._URL, params={"access_key": self._API_KEY}).text # TODO catch err
@@ -22,24 +26,13 @@ class CurrencyConverterCrawler:
         self.base = jsondict["base"]
 
     def convert(self, amount: float, base: str, desired: list):
-        # TODO fix the russian mess
-        if base == "EUR":
-            a = []
-            for b in desired:
-                try:
-                    a.append({"amount": self.rates[b] * amount, "currency": b, "rate": self.rates[b]})
-                except KeyError as ke:
-                    whatever = str(ke).split("'")[1]
-                    raise Exception(f'Keine Currency die {whatever} heißt. Wahrscheinlich ein schreibfehler in Zielwährung')
-            return a
-        elif base in self.rates:
-            amountInEuro = amount / self.rates[base]
-            a = []
-            for b in desired:
-                a.append({"amount": self.rates[b] * amountInEuro, "currency": b, "rate": (self.rates[b] * amountInEuro) / amount})
-            return a
-        else:
-            raise ValueError("Couldn't find base currency")
+        a = []
+        for d in desired:
+            try:
+                a.append({"amount": self.rates[d] / self.rates[base] * amount, "currency": d, "rate": self.rates[d] / self.rates[base]})
+            except KeyError:
+                raise Exception(f'Keine Currency die {d} heißt. Wahrscheinlich ein schreibfehler in Zielwährung')
+        return a
 
 
 if __name__ == "__main__":
