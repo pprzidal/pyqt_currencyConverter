@@ -1,11 +1,9 @@
 import os
-
 from dotenv import load_dotenv
 
 
 class CurrencyConverterCrawler:
     _URL = "http://api.exchangeratesapi.io/v1/latest"
-    # _API_KEY = "36517c0199f77a3eb3f068ef0fe58e8c"  # TODO change
 
     def __init__(self):
         self.rates = None
